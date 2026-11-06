@@ -4,17 +4,27 @@ Scripts PowerShell / Batch pour **mettre à jour les applications du Microsoft S
 
 ## Fonctionnement
 
-Le script `Update-StoreApps.ps1` combine deux méthodes :
+Le script `Update-StoreApps.ps1` se déroule en 4 étapes :
+
+1. **Inventaire** : liste les applications Store installées et leur version actuelle.
+2. **Scan de mises à jour du Store** (voir ci-dessous).
+3. **Comparaison des versions** avec winget (version installée / version disponible), puis mise à jour de **chaque application qui a une mise à jour**.
+4. **Bilan** : versions avant / après.
+
+Les deux mécanismes de mise à jour utilisés :
 
 1. **Scan de mises à jour du Store** (équivalent du bouton « Obtenir les mises à jour ») via l'interface CIM/MDM :
    ```powershell
    Get-CimInstance -Namespace "root\cimv2\mdm\dmmap" -ClassName "MDM_EnterpriseModernAppManagement_AppManagement01" |
        Invoke-CimMethod -MethodName UpdateScanMethod
    ```
-2. **winget** sur la source `msstore` :
+2. **winget** sur la source `msstore`, via le module PowerShell officiel [`Microsoft.WinGet.Client`](https://www.powershellgallery.com/packages/Microsoft.WinGet.Client) (installé automatiquement au premier lancement) :
    ```powershell
-   winget upgrade --all --source msstore --silent --accept-source-agreements --accept-package-agreements
+   Get-WinGetPackage -Source msstore | Where-Object IsUpdateAvailable | ForEach-Object {
+       Update-WinGetPackage -Id $_.Id -Source msstore -Mode Silent
+   }
    ```
+   Si le module ne peut pas être installé, le script se replie sur `winget upgrade --all --source msstore`.
 
 Les deux sont complémentaires : winget ne voit pas toutes les applications du Store, et le scan CIM délègue le téléchargement au Store en arrière-plan.
 
@@ -28,11 +38,25 @@ Les deux sont complémentaires : winget ne voit pas toutes les applications du S
 
 | Fichier | Rôle |
 |---|---|
-| `Update-StoreApps.ps1` | Lance les mises à jour. Option `-Silent` : sans fenêtre, sans pause, journal dans un fichier. |
-| `Update-StoreApps.bat` | Lance le `.ps1` par double-clic (contourne l'ExecutionPolicy). |
-| `Install-StartupTask.ps1` | Installe la tâche planifiée au démarrage (`-Uninstall` pour la retirer). |
-| `Installer-au-demarrage.bat` | Double-clic pour installer la tâche au démarrage. |
-| `Desinstaller-du-demarrage.bat` | Double-clic pour supprimer la tâche. |
+| `Update-StoreApps.ps1` | Vérifie les versions et lance les mises à jour (options ci-dessous). |
+| `Update-StoreApps.bat` | Mise à jour normale par double-clic. |
+| `Update-StoreApps-Force.bat` | Mise à jour **forcée** par double-clic. |
+| `Verifier-versions.bat` | Affiche les versions et les mises à jour disponibles, **sans rien installer**. |
+| `Install-StartupTask.ps1` | Installe la tâche planifiée au démarrage (`-Force`, `-Uninstall`). |
+| `Installer-au-demarrage.bat` | Installe la tâche au démarrage (mode normal). |
+| `Installer-au-demarrage-Force.bat` | Installe la tâche au démarrage en mode **forcé**. |
+| `Desinstaller-du-demarrage.bat` | Supprime la tâche. |
+
+## Options de `Update-StoreApps.ps1`
+
+| Option | Effet |
+|---|---|
+| *(aucune)* | Inventaire, scan du Store, mise à jour des applications qui en ont une, bilan. |
+| `-CheckOnly` | Affiche les versions installées et disponibles, n'installe rien. |
+| `-Force` | Redémarre le service d'installation du Store (`InstallService`) pour débloquer les téléchargements en attente, puis met à jour avec `winget --force` en incluant les paquets épinglés. |
+| `-Silent` | Mode démarrage : sans pause, sans ouvrir le Store, journal dans un fichier. |
+
+Les options se combinent, par exemple `-Force -Silent`.
 
 ## Utilisation
 
@@ -46,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Update-StoreApps.ps1
 
 ### Au démarrage de Windows
 
-Garder tous les fichiers dans le même dossier puis double-cliquer sur **`Installer-au-demarrage.bat`** (une seule validation UAC).
+Garder tous les fichiers dans le même dossier puis double-cliquer sur **`Installer-au-demarrage.bat`**, ou sur **`Installer-au-demarrage-Force.bat`** pour le mode forcé (une seule validation UAC).
 
 L'installation :
 

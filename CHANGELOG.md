@@ -1,5 +1,19 @@
 # Notes de version
 
+## v1.1.0 — 2026-11-06
+
+### Nouveautés
+
+- **Vérification des versions** : le script liste les applications Store installées avec leur version, compare la version installée à la version disponible (module `Microsoft.WinGet.Client`, installé automatiquement) et met à jour chaque application concernée.
+- **Bilan avant / après** des versions en fin d'exécution.
+- **Option `-CheckOnly`** : affiche les versions et les mises à jour disponibles sans rien installer (`Verifier-versions.bat`).
+- **Option `-Force`** : redémarre le service d'installation du Store (`InstallService`), puis met à jour avec `winget --force` en incluant les paquets épinglés (`Update-StoreApps-Force.bat`).
+- **`Install-StartupTask.ps1 -Force`** : tâche au démarrage en mode forcé (`Installer-au-demarrage-Force.bat`).
+
+### Changements
+
+- Si le module `Microsoft.WinGet.Client` ne peut pas être installé, le script se replie sur `winget upgrade --all`.
+
 ## v1.0.0 — 2026-11-06
 
 Première version.
