@@ -1,5 +1,18 @@
 # Notes de version
 
+## v1.2.0 — 2026-11-06
+
+### Nouveautés
+
+- **Store CLI (`store.exe`) comme méthode principale** : `store updates --apply true` vérifie et installe les mises à jour de toutes les applications Store, y compris celles que winget ne reconnaît pas.
+- **Attente de la fin des installations** avant le bilan (option `-WaitMinutes`, 5 minutes par défaut).
+- **Option `-Repair`** : vidage du cache du Store (`wsreset.exe`) et réenregistrement de l'application Microsoft Store avant les mises à jour (`Reparer-et-mettre-a-jour.bat`).
+
+### Changements
+
+- Le scan CIM et winget deviennent des méthodes complémentaires / de secours.
+- En mode `-CheckOnly`, la liste des mises à jour vient de `store.exe`.
+
 ## v1.1.0 — 2026-11-06
 
 ### Nouveautés
